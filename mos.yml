@@ -1,6 +1,6 @@
-author: mongoose-os
+author: John Forde <fordee@me.com>
 type: lib
-description: An empty lib that does nothing
+description: Mitsubishi IR control
 version: 1.0
 
 sources:
