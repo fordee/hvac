@@ -39,7 +39,7 @@ int32_t mask = 1; //our bitmask
 // CONTROL 5 + 1 {"POWER","MODE","TEMP","FAN","VANE"}; {0x01, 0x01,  0x05,  0x00, 0x01, 0x01};
   //                 { 0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x00, 0x00,         0x01, 0x01,  0x05,  0x00, 0x01, 0x01};
   // data array is a valid trame, only byte to be chnaged will be updated.
-  int32_t data[18] = {0xfc, 0x02, 0x00, 0x00, 0x01, 0x01, 0x0f, 0x00, 0x07, 0x00, 0x00, 0x03, 0x94, 0x00, 0x00, 0x00, 0x00, 0xac}
+  int32_t data[18] = {0xfc, 0x02, 0x00, 0x00, 0x01, 0x01, 0x0f, 0x00, 0x07, 0x00, 0x00, 0x03, 0x94, 0x00, 0x00, 0x00, 0x00, 0xac};
 
 int i, j;
 
@@ -52,7 +52,7 @@ void irsend_mitsubishi_pwm(int pin, int code) {
     // Header for the Packet
     irsend_carrier_38kHz(pin, IRSEND_MITSU_HDR_MARK / IRSEND_NEC_PWM_CYCLE); //mark(HVAC_MITSUBISHI_HDR_MARK);
     mgos_usleep(IRSEND_MITSU_HDR_SPACE); //space(HVAC_MITSUBISHI_HDR_SPACE);
-    for (i = 0; i < 17; i++) {
+    for (i = 0; i < 18; i++) {
       // Send all Bits from Byte Data in Reverse Order
       for (mask = 00000001; mask > 0; mask <<= 1) { //iterate through bit mask
         if (data[i] & mask) { // Bit ONE
