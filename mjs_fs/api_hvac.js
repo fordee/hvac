@@ -13,7 +13,7 @@ let HVAC = {
       // ## **`IR.Sender.Mitsubishi.pwm(pin, code)`**
       // Send Mitsubishi HVAC IR code via real IR led. Return value: none.
       pwm: function(pin, code) {
-        return HVAC.Sender.Mitsubishi._send(pin, code);
+        return HVAC.Sender.Mitsubishi._send(pin, off);
       }
     }
 
