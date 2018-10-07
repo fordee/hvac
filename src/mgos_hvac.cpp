@@ -11,6 +11,8 @@ int halfPeriodicTime;
 int IRpin;
 int khz;
 
+//typedef byte unsigned char;
+
 typedef enum HvacMode {
   HVAC_HOT,
   HVAC_COLD,
@@ -71,9 +73,9 @@ typedef enum HvacProfileMode {
 #define HVAC_MITSUBISHI_RPT_SPACE   17100 // Above original iremote limit
 
 
-/****************************************************************************
-/* enableIROut : Set global Variable for Frequency IR Emission
-/***************************************************************************/ 
+//------------------------------------------------------------------------------
+// enableIROut : Set global Variable for Frequency IR Emission
+//------------------------------------------------------------------------------
 void enableIROut(int khz) {
   // Enables IR output.  The khz value controls the modulation frequency in kilohertz.
   halfPeriodicTime = 500/khz; // T = 1/f but we need T/2 in microsecond and f is in kHz
@@ -82,31 +84,32 @@ void enableIROut(int khz) {
 //------------------------------------------------------------------------------
 // mark
 //------------------------------------------------------------------------------
-static void mark(int pin, int n)
+static void mark(int n)
 {
-  // make signal of circa 38 kHz of circa 1/3 duty
+  // make signal of circa 38 kHz of circa 1/2 duty
+
   for (; n >= 0; --n) {
-    mgos_gpio_write(pin, 1);
+    mgos_gpio_write(IRpin, 1);
     mgos_usleep(13);
-    mgos_gpio_write(pin, 0);
+    mgos_gpio_write(IRpin, 0);
     mgos_usleep(13);
   }
 }
 
-/****************************************************************************
-/* space ( int time) 
-/***************************************************************************/ 
+//------------------------------------------------------------------------------
+// space ( int time) 
+//------------------------------------------------------------------------------ 
 /* Leave pin off for time (given in microseconds) */
 void space(int time) {
   // Sends an IR space for the specified number of microseconds.
   // A space is no output, so the PWM output is disabled.
-  mgos_gpio_write(IRpin, LOW);
+  mgos_gpio_write(IRpin, 0);
   if (time > 0) mgos_usleep(time);
 }
 
-/****************************************************************************
-/* sendRaw (unsigned int buf[], int len, int hz)
-/***************************************************************************/ 
+//------------------------------------------------------------------------------
+// sendRaw (unsigned int buf[], int len, int hz)
+//------------------------------------------------------------------------------
 void sendRaw (unsigned int buf[], int len, int hz)
 {
   enableIROut(hz);
@@ -128,44 +131,52 @@ void sendRaw (unsigned int buf[], int len, int hz)
 
 #define IRSEND_NEC_PWM_CYCLE  (1000000 / 38000)
 
-void irsend_mitsubishi_pwm(int pin, int code) {
-  int32_t mask = 1; //our bitmask
+void irsend_mitsubishi_pwm(int pin, int OFF) {
 
-  int32_t data[18] = { 0x23, 0xCB, 0x26, 0x01, 0x00, 0x20, 0x08, 0x06, 0x30, 0x45, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F };
+  IRpin = pin;
 
-  int i, j;
+  unsigned char mask = 1; //our bitmask
+
+  unsigned char data[18] = { 0x23, 0xCB, 0x26, 0x01, 0x00, 0x20, 0x08, 0x06, 0x30, 0x45, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F };
+
+  unsigned char i, j;
   
   mgos_gpio_set_mode(pin, MGOS_GPIO_MODE_OUTPUT); // enableIROut(38);  // 38khz
 
-  
+  // Byte 6 - On / Off
+  if (OFF) {
+    data[5] = (unsigned char) 0x0; // Turn OFF HVAC
+  } else {
+    data[5] = (unsigned char) 0x20; // Tuen ON HVAC
+  }
 
   data[17] = 0;
   for (i = 0; i < 17; i++) {
-    data[17] = (int32_t) data[i] + data[17];  // CRC is a simple bits addition
+    data[17] = (unsigned char) data[i] + data[17];  // CRC is a simple bits addition
   }
   
   space(0);
 
   for (j = 0; j < 2; j++) {  // For Mitsubishi IR protocol we have to send two time the packet data
     // Header for the Packet
-    mark(pin, HVAC_MITSUBISHI_HDR_MARK); //mark(HVAC_MITSUBISHI_HDR_MARK);
+    mark(HVAC_MITSUBISHI_HDR_MARK/IRSEND_NEC_PWM_CYCLE ); //mark(HVAC_MITSUBISHI_HDR_MARK);
     space(HVAC_MITSUBISHI_HDR_SPACE); //space(HVAC_MITSUBISHI_HDR_SPACE);
     for (i = 0; i < 18; i++) {
       // Send all Bits from Byte Data in Reverse Order
       for (mask = 00000001; mask > 0; mask <<= 1) { //iterate through bit mask
         if (data[i] & mask) { // Bit ONE
-          mark(pin, HVAC_MITSUBISHI_BIT_MARK); //mark(HVAC_MITSUBISHI_BIT_MARK);
+          mark(HVAC_MITSUBISHI_BIT_MARK/IRSEND_NEC_PWM_CYCLE ); //mark(HVAC_MITSUBISHI_BIT_MARK);
           space(HVAC_MITSUBISHI_ONE_SPACE); //space(HVAC_MITSUBISHI_ONE_SPACE);
         }
         else { // Bit ZERO
-          mark(pin, HVAC_MITSUBISHI_BIT_MARK);//mark(HVAC_MITSUBISHI_BIT_MARK);
-          space(HVAC_MITSUBISHI_ZERO_SPACE); //space(HVAC_MISTUBISHI_ZERO_SPACE);
+          mark(HVAC_MITSUBISHI_BIT_MARK/IRSEND_NEC_PWM_CYCLE);//mark(HVAC_MITSUBISHI_BIT_MARK);
+          space(HVAC_MISTUBISHI_ZERO_SPACE); //space(HVAC_MISTUBISHI_ZERO_SPACE);
         }
         //Next bits
       }
     }
     // End of Packet and retransmission of the Packet
-    mark(pin, HVAC_MITSUBISHI_RPT_MARK); //mark(HVAC_MITSUBISHI_RPT_MARK);
+    mark(HVAC_MITSUBISHI_RPT_MARK/IRSEND_NEC_PWM_CYCLE ); //mark(HVAC_MITSUBISHI_RPT_MARK);
     space(HVAC_MITSUBISHI_RPT_SPACE); //space(HVAC_MITSUBISHI_RPT_SPACE);
     space(0); // Just to be sure
   }

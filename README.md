@@ -1,7 +1,6 @@
-# A blank Mongoose OS library
+# ESP32 Mitsubishi HVAC library
 
 
 ## Overview
 
-This blank library is intended to be used as a skeleton for deleloping
-Mongoose OS libraries.
+Library to control Mitubishi HVAC with IR Remote.
