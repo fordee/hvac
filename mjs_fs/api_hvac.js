@@ -8,15 +8,15 @@ let HVAC = {
   Sender: {
 
     Mitsubishi: {
-      _send: ffi('void mgos_irsend_mitsubishi(int, int)'),
+      _send: ffi('void mgos_irsend_mitsubishi(int, int, int, int, int, int)'),
 
       // ## **`IR.Sender.Mitsubishi.pwm(pin, code)`**
       // Send Mitsubishi HVAC IR code via real IR led. Return value: none.
-      pwm: function(pin, code) {
-        return HVAC.Sender.Mitsubishi._send(pin, off);
+      pwm: function(pin, off, HVAC_Mode, HVAC_Temp, HVAC_FanMode, HVAC_VanneMode) {
+        return HVAC.Sender.Mitsubishi._send(pin, off, HVAC_Mode, HVAC_Temp, HVAC_FanMode, HVAC_VanneMode);
       }
     }
-
   }
 
 };
+
